@@ -1,0 +1,5 @@
+# Nexus-Core Architectural Manifesto
+
+Nexus-Core is a deterministic, bare-metal agentic orchestrator engineered for Edge AI workloads and the Gemma 4 model family. The runtime is designed to behave predictably under tight latency and memory envelopes: every cognitive routing decision, every KV cache transition, and every inter-agent message exchange must be reproducible from a given input state. Stochasticity is confined to model inference itself; the surrounding control plane is strictly deterministic.
+
+To honor this contract, Nexus-Core systematically avoids Python's Global Interpreter Lock (GIL) as a scheduling primitive. Python exists only as a thin developer-experience (DX) surface — ergonomic APIs, schema declarations, and orchestration glue. All heavy work — cognitive routing, parallel agent execution, memory management via Codata and ZeroIPC, and direct interaction with Gemma 4 weights — is delegated to the Rust core, which owns concurrency, ownership, and lifetime guarantees. Python never drives parallelism; Rust does.

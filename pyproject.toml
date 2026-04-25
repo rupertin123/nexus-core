@@ -1,0 +1,29 @@
+[project]
+name = "nexus-core"
+version = "0.1.0"
+description = "Nexus-Core bare-metal agentic orchestrator: Python DX, Rust core."
+readme = "README.md"
+authors = [
+    { name = "Lucas Aloisio", email = "lucas.aloisio@local.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.4.4",
+]
+
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+module-name = "nexus_core"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "maturin>=1.13.1",
+    "pytest>=9.0.3",
+]

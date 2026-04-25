@@ -1,0 +1,73 @@
+# Nexus-Core inference template.
+#
+# This Modelfile is the canonical configuration for any local
+# inference engine (Ollama, llama.cpp server wrappers, custom
+# loaders) that needs to talk to a Nexus-Core orchestrated agent.
+# The PARAMETER and SYSTEM directives below align the underlying
+# model with the contracts our Rust core enforces — most
+# importantly, the SemanticInterceptor in src/validation.rs which
+# rejects any non-JSON or schema-violating completion before it
+# reaches Python.
+
+FROM gemma-4-8b-it-Q4_K_M.gguf
+
+# 128k context window. The PagedAttention allocator in src/paged_attention.rs
+# makes long contexts viable on commodity hardware by paging fixed-size
+# physical KV blocks instead of pre-reserving a contiguous tensor per
+# sequence. Branching (Tree-of-Thought, speculative decoding) shares the
+# system-prompt blocks via Copy-on-Write so this large window stays cheap
+# even under fan-out.
+PARAMETER num_ctx 128000
+
+# Deterministic decoding. The Cognitive Reliability Layer in
+# src/validation.rs is the source of truth for output validity, but
+# keeping temperature low here reduces the number of correction-prompt
+# round-trips the interceptor has to issue.
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.05
+
+# Strict JSON output contract.
+#
+# Every response from this model is consumed by Nexus-Core's
+# SemanticInterceptor (see src/validation.rs). The interceptor will:
+#   1. Parse the response with serde_json. Any syntax error triggers the
+#      correction prompt: "CRITICAL: Invalid JSON format. Expected valid
+#      JSON object." and the model is re-invoked.
+#   2. Enforce that every required key is present at the top level.
+#      Missing keys trigger: "CRITICAL: Schema validation failed.
+#      Missing required key: <name>. Fix the JSON structure."
+#   3. Quarantine the request as a Python ValueError after the bounded
+#      retry budget is exhausted.
+#
+# Therefore the model MUST treat the rules below as load-bearing — the
+# orchestrator will not forward, log, or surface anything that violates
+# them.
+SYSTEM """
+You are an agent running inside the Nexus-Core deterministic
+orchestrator. You communicate with the orchestrator exclusively via
+strict JSON.
+
+Output rules — non-negotiable:
+
+1. Every response is a single, well-formed JSON object. No prose,
+   no Markdown, no code fences, no leading or trailing whitespace
+   outside the object.
+2. Every top-level key required by the active task contract MUST be
+   present. Do not invent additional keys unless the contract
+   permits them.
+3. String values are valid UTF-8. Numbers are JSON numbers (not
+   quoted). Booleans are `true` / `false`, never `True` / `False`.
+4. If you cannot satisfy the contract, return a JSON object with the
+   single key `"error"` whose value is a short human-readable string.
+   Do not narrate the failure outside the JSON object.
+5. Tool invocations are expressed as JSON of the shape
+   `{"tool_name": "...", "payload": {...}}`. The Zero-Trust MCP
+   gatekeeper (src/mcp.rs) will inspect `tool_name` against the
+   active SecurityLevel before any transport executes; tools whose
+   names start with `write_`, `delete_`, `drop_`, or `update_`
+   require human approval under `require_approval`.
+
+Reasoning happens inside JSON string values, never outside the
+object. When in doubt, output less prose and more structure.
+"""
