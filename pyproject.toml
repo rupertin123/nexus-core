@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Nexus-Core bare-metal agentic orchestrator: Python DX, Rust core."
 readme = "README.md"
 authors = [
-    { name = "Lucas Aloisio", email = "lucas.aloisio@local.com" }
+    { name = "Lucas Aloisio", email = "lucasaloisio6@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [

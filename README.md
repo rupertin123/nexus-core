@@ -56,3 +56,12 @@ That is the entire surface area you need to put a deterministic agent loop in pr
 ## License
 
 Apache 2.0 for the core. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the Open-Core split and the PR contract.
+
+---
+
+## Contact & Community
+
+Architectural feedback, open-source collaboration, and B2B / VC inquiries are all welcome. The fastest way to start a conversation is a direct message on either of the channels below.
+
+- **Email:** [lucasaloisio6@gmail.com](mailto:lucasaloisio6@gmail.com)
+- **LinkedIn:** [Lucas Aloisio](https://www.linkedin.com/in/lucas-aloisio-a17608240/)
